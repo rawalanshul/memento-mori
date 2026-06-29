@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Memento Mori</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garant:wght@300;400;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0D0D0D; color: #E8DCC8; font-family: 'Inter', sans-serif; min-height: 100vh; }
+  button, input, textarea, select { font-family: 'Inter', sans-serif; }
+
+  /* Setup */
+  #setup { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+  .setup-box { width: 100%; max-width: 420px; }
+  .eyebrow { color: #C9A84C; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 16px; }
+  .display-title { font-family: 'Cormorant Garant', Georgia, serif; font-size: 38px; font-weight: 300; color: #E8DCC8; line-height: 1.2; }
+  .subtitle { color: #666; font-size: 14px; margin-top: 16px; line-height: 1.6; }
+  .form-group { display: flex; flex-direction: column; gap: 20px; margin-top: 40px; }
+  .lbl { color: #888; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 6px; display: block; }
+  .inp { background: #2A2A2A; border: 1px solid #444; border-radius: 6px; color: #E8DCC8; padding: 10px 14px; font-size: 15px; outline: none; width: 100%; }
+  .inp:focus { border-color: #C9A84C; }
+  .dob-row { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 8px; }
+  .slider-row { display: flex; align-items: center; gap: 12px; }
+  .slider-row input[type=range] { flex: 1; accent-color: #C9A84C; }
+  .slider-val { color: #C9A84C; font-family: 'Cormorant Garant', Georgia, serif; font-size: 28px; min-width: 50px; text-align: right; }
+  .btn-primary { background: #C9A84C; color: #0D0D0D; border: none; border-radius: 6px; padding: 14px 24px; font-size: 14px; font-weight: 600; letter-spacing: 0.05em; cursor: pointer; width: 100%; margin-top: 8px; }
+  .btn-primary:hover { background: #d4b45a; }
+
+  /* Main */
+  #main { display: none; padding: 32px 24px 64px; }
+  .header { max-width: 760px; margin: 0 auto 36px; }
+  .header-row { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px; }
+  .page-title { font-family: 'Cormorant Garant', Georgia, serif; font-size: 32px; font-weight: 300; color: #E8DCC8; margin-top: 4px; }
+  .header-btns { display: flex; gap: 8px; align-items: center; }
+  .btn-outline { background: none; border: 1px solid #333; border-radius: 6px; color: #888; cursor: pointer; font-size: 12px; padding: 6px 12px; transition: border-color 0.15s, color 0.15s; }
+  .btn-outline:hover { border-color: #C9A84C; color: #C9A84C; }
+  .stats-row { display: flex; gap: 32px; margin-top: 24px; flex-wrap: wrap; }
+  .stat-val { color: #C9A84C; font-family: 'Cormorant Garant', Georgia, serif; font-size: 28px; font-weight: 300; }
+  .stat-lbl { color: #555; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 2px; }
+  .legend { max-width: 760px; margin: 0 auto 14px; display: flex; gap: 20px; font-size: 11px; color: #555; flex-wrap: wrap; align-items: center; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+  .grid-wrap { max-width: 760px; margin: 0 auto; }
+  #dot-grid { display: grid; gap: 2px; width: fit-content; }
+  .dot { border-radius: 50%; cursor: default; transition: transform 0.1s, background 0.1s; flex-shrink: 0; }
+  .dot.clickable { cursor: pointer; }
+  .dot.clickable:hover { transform: scale(1.4); background: #C9A84C !important; }
+  .grid-note { margin-top: 28px; color: #444; font-size: 12px; line-height: 1.8; }
+
+  /* Overlay */
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.88); display: flex; align-items: center; justify-content: center; z-index: 150; padding: 24px 16px; overflow-y: auto; }
+  .overlay.top-align { align-items: flex-start; }
+  .modal { background: #111; border-radius: 14px; width: 100%; max-width: 420px; padding: 28px; border: 1px solid #222; }
+  .modal.wide { max-width: 500px; }
+  .modal.full { max-width: 600px; }
+  .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+  .modal-eyebrow { color: #C9A84C; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; }
+  .modal-title { font-family: 'Cormorant Garant', Georgia, serif; font-size: 24px; font-weight: 300; color: #E8DCC8; margin-top: 4px; }
+  .modal-sub { color: #555; font-size: 12px; margin-top: 2px; }
+  .btn-close { background: none; border: none; color: #555; cursor: pointer; font-size: 20px; padding: 4px; line-height: 1; }
+  .section-lbl { color: #888; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 10px; }
+
+  /* Week days list */
+  .day-list { display: flex; flex-direction: column; gap: 8px; }
+  .day-btn { display: flex; align-items: center; justify-content: space-between; border-radius: 8px; padding: 12px 16px; cursor: pointer; border: 1px solid #333; background: #2A2A2A; transition: all 0.15s; text-align: left; width: 100%; }
+  .day-btn:disabled { cursor: not-allowed; opacity: 0.35; }
+  .day-btn:not(:disabled):hover { border-color: #C9A84C; }
+  .day-btn.reflected { background: rgba(201,168,76,0.1); border-color: #C9A84C; }
+  .day-btn.today-btn { border-color: #2d5a2d; }
+  .day-btn.future { background: transparent; border-color: #222; }
+  .day-dot { width: 8px; height: 8px; border-radius: 50%; background: #3A3A3A; border: 1px solid #444; flex-shrink: 0; }
+  .day-name { font-size: 14px; font-weight: 500; color: #E8DCC8; }
+  .day-name.today-color { color: #4a9a4a; }
+  .day-date-sm { font-size: 11px; color: #555; margin-top: 1px; }
+  .day-arrow { color: #444; font-size: 13px; }
+  .day-arrow.reflected { color: #C9A84C; }
+  .modal-hint { margin-top: 20px; color: #444; font-size: 11px; text-align: center; }
+
+  /* Day reflection */
+  .mood-row { display: flex; gap: 10px; margin-bottom: 22px; flex-wrap: wrap; }
+  .mood-btn { background: transparent; border: 1px solid #333; border-radius: 8px; padding: 8px 10px; font-size: 22px; cursor: pointer; transition: all 0.15s; }
+  .mood-btn.active { background: #3A3A3A; border-color: #C9A84C; }
+  .hours-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; margin-bottom: 22px; }
+  .hour-inp { background: #2A2A2A; border: 1px solid #333; border-radius: 6px; color: #E8DCC8; padding: 8px; font-size: 15px; outline: none; width: 100%; text-align: center; }
+  .hour-inp:focus { border-color: #C9A84C; }
+  .hour-lbl { color: #555; font-size: 10px; margin-top: 4px; text-align: center; }
+  .q-list { display: flex; flex-direction: column; gap: 14px; margin-bottom: 24px; }
+  .q-text { color: #E8DCC8; font-size: 13px; margin-bottom: 6px; line-height: 1.5; }
+  .q-textarea { background: #2A2A2A; border: 1px solid #333; border-radius: 6px; color: #E8DCC8; padding: 10px 12px; font-size: 14px; outline: none; width: 100%; resize: vertical; min-height: 64px; }
+  .q-textarea:focus { border-color: #C9A84C; }
+  .q-textarea:read-only { color: #888; cursor: default; }
+
+  /* Journal */
+  .journal-filters { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+  .journal-search { background: #2A2A2A; border: 1px solid #444; border-radius: 6px; color: #E8DCC8; padding: 8px 12px; font-size: 13px; outline: none; flex: 1; min-width: 160px; }
+  .journal-search:focus { border-color: #C9A84C; }
+  .journal-select { background: #2A2A2A; border: 1px solid #444; border-radius: 6px; color: #E8DCC8; padding: 8px 10px; font-size: 13px; outline: none; cursor: pointer; }
+  .journal-empty { color: #444; text-align: center; padding: 40px 0; font-size: 14px; line-height: 1.8; }
+  .journal-list { display: flex; flex-direction: column; gap: 10px; max-height: 60vh; overflow-y: auto; padding-right: 4px; }
+  .journal-list::-webkit-scrollbar { width: 4px; }
+  .journal-list::-webkit-scrollbar-track { background: transparent; }
+  .journal-list::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+  .journal-entry { border: 1px solid #222; border-radius: 10px; padding: 14px 16px; background: #0f0f0f; cursor: pointer; transition: border-color 0.15s; }
+  .journal-entry:hover { border-color: #C9A84C; }
+  .journal-entry-header { display: flex; justify-content: space-between; align-items: flex-start; }
+  .journal-entry-date { font-family: 'Cormorant Garant', Georgia, serif; font-size: 18px; color: #E8DCC8; font-weight: 300; }
+  .journal-entry-meta { display: flex; gap: 8px; align-items: center; margin-top: 6px; }
+  .journal-tag { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 4px; padding: 2px 8px; font-size: 10px; color: #666; }
+  .journal-preview { color: #555; font-size: 12px; margin-top: 8px; line-height: 1.5; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+
+  /* Read-only day view */
+  .readonly-answer { background: #181818; border: 1px solid #222; border-radius: 6px; color: #888; padding: 10px 12px; font-size: 14px; line-height: 1.6; min-height: 40px; white-space: pre-wrap; }
+  .readonly-answer.empty { color: #333; font-style: italic; }
+  .hours-display { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; margin-bottom: 22px; }
+  .hour-display-cell { background: #181818; border: 1px solid #222; border-radius: 6px; padding: 10px 8px; text-align: center; }
+  .hour-display-val { color: #C9A84C; font-family: 'Cormorant Garant', Georgia, serif; font-size: 22px; }
+  .hour-display-lbl { color: #555; font-size: 10px; margin-top: 3px; }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- SETUP SCREEN -->
+<div id="setup">
+  <div class="setup-box">
+    <div style="text-align:center;margin-bottom:48px;">
+      <div class="eyebrow">Memento Mori</div>
+      <h1 class="display-title">Remember<br>you will die.</h1>
+      <p class="subtitle">Your life in weeks. Each dot is one week.<br>Most of them are already gone.</p>
+    </div>
+    <div class="form-group">
+      <div>
+        <label class="lbl">Your name</label>
+        <input class="inp" id="inp-name" placeholder="e.g. Ankush" />
+      </div>
+      <div>
+        <label class="lbl">Date of birth</label>
+        <div class="dob-row">
+          <input class="inp" id="inp-year" type="number" placeholder="Year (e.g. 1995)" />
+          <input class="inp" id="inp-month" type="number" placeholder="MM" min="1" max="12" />
+          <input class="inp" id="inp-day" type="number" placeholder="DD" min="1" max="31" />
+        </div>
+      </div>
+      <div>
+        <label class="lbl">Life expectancy (years)</label>
+        <div class="slider-row">
+          <input type="range" id="inp-life" min="60" max="100" value="80" oninput="document.getElementById('life-val').textContent=this.value" />
+          <span class="slider-val" id="life-val">80</span>
+        </div>
+      </div>
+      <button class="btn-primary" onclick="startApp()">Show me my life</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN SCREEN -->
+<div id="main">
+  <div class="header">
+    <div class="header-row">
+      <div>
+        <div class="eyebrow">Memento Mori</div>
+        <div class="page-title" id="page-title"></div>
+        <div id="today-display" style="color:#555;font-size:12px;margin-top:6px;"></div>
+      </div>
+      <div class="header-btns">
+        <button class="btn-outline" onclick="openJournal()">📖 Journal</button>
+        <button class="btn-outline" onclick="resetApp()">Reset</button>
+      </div>
+    </div>
+    <div class="stats-row" id="stats-row"></div>
+  </div>
+  <div class="legend">
+    <span><span class="legend-dot" style="background:#3A3A3A;border:1px solid #3A3A3A;"></span>Past week</span>
+    <span><span class="legend-dot" style="background:rgba(201,168,76,0.4);border:1px solid rgba(201,168,76,0.5);"></span>Partly reflected</span>
+    <span><span class="legend-dot" style="background:#C9A84C;border:1px solid #C9A84C;"></span>Fully reflected</span>
+    <span><span class="legend-dot" style="background:#1e3a1e;border:1px solid #2d5a2d;"></span>This week</span>
+    <span><span class="legend-dot" style="background:#1a1a1a;border:1px solid #333;"></span>Future</span>
+  </div>
+  <div class="grid-wrap">
+    <div id="dot-grid"></div>
+    <div class="grid-note">Each row is one year · Each dot is one week · Click a week to see its days</div>
+  </div>
+</div>
+
+<!-- WEEK MODAL -->
+<div class="overlay hidden" id="week-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-eyebrow" id="wm-eyebrow"></div>
+        <div class="modal-title" id="wm-title"></div>
+        <div class="modal-sub" id="wm-sub"></div>
+      </div>
+      <button class="btn-close" onclick="closeWeekModal()">✕</button>
+    </div>
+    <div class="day-list" id="day-list"></div>
+    <div class="modal-hint">Tap a day to log or view your reflection</div>
+  </div>
+</div>
+
+<!-- DAY MODAL (write/edit) -->
+<div class="overlay top-align hidden" id="day-overlay">
+  <div class="modal wide" style="margin-bottom:24px;">
+    <div class="modal-header">
+      <div>
+        <div class="modal-eyebrow" id="dm-eyebrow"></div>
+        <div class="modal-title" id="dm-title"></div>
+      </div>
+      <button class="btn-close" onclick="closeDayModal()">✕</button>
+    </div>
+    <div style="margin-bottom:22px;">
+      <div class="section-lbl">How was today?</div>
+      <div class="mood-row" id="mood-row"></div>
+    </div>
+    <div style="margin-bottom:22px;">
+      <div class="section-lbl">How did you spend your hours?</div>
+      <div class="hours-grid">
+        <div><input class="hour-inp" id="h-sleep" type="number" min="0" max="24" placeholder="0"><div class="hour-lbl">Sleep</div></div>
+        <div><input class="hour-inp" id="h-work" type="number" min="0" max="24" placeholder="0"><div class="hour-lbl">Work</div></div>
+        <div><input class="hour-inp" id="h-meaningful" type="number" min="0" max="24" placeholder="0"><div class="hour-lbl">Meaningful</div></div>
+        <div><input class="hour-inp" id="h-wasted" type="number" min="0" max="24" placeholder="0"><div class="hour-lbl">Wasted</div></div>
+      </div>
+    </div>
+    <div style="margin-bottom:6px;"><div class="section-lbl">Reflect on today</div></div>
+    <div class="q-list" id="q-list"></div>
+    <button class="btn-primary" style="margin-top:0;" onclick="saveDay()">Save this day</button>
+  </div>
+</div>
+
+<!-- DAY READ-ONLY VIEW -->
+<div class="overlay top-align hidden" id="view-overlay">
+  <div class="modal wide" style="margin-bottom:24px;">
+    <div class="modal-header">
+      <div>
+        <div class="modal-eyebrow" id="vm-eyebrow"></div>
+        <div class="modal-title" id="vm-title"></div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="btn-outline" id="vm-edit-btn" onclick="switchToEdit()" style="font-size:12px;padding:6px 10px;">Edit</button>
+        <button class="btn-close" onclick="closeViewModal()">✕</button>
+      </div>
+    </div>
+    <div id="vm-content"></div>
+  </div>
+</div>
+
+<!-- JOURNAL -->
+<div class="overlay top-align hidden" id="journal-overlay">
+  <div class="modal full" style="margin-bottom:24px;">
+    <div class="modal-header">
+      <div>
+        <div class="modal-eyebrow">Journal</div>
+        <div class="modal-title">All reflections</div>
+      </div>
+      <button class="btn-close" onclick="closeJournal()">✕</button>
+    </div>
+    <div class="journal-filters">
+      <input class="journal-search" id="journal-search" placeholder="Search reflections..." oninput="renderJournal()" />
+      <select class="journal-select" id="journal-mood-filter" onchange="renderJournal()">
+        <option value="">All moods</option>
+        <option value="0">😔</option>
+        <option value="1">😐</option>
+        <option value="2">🙂</option>
+        <option value="3">😊</option>
+        <option value="4">✨</option>
+      </select>
+    </div>
+    <div class="journal-list" id="journal-list"></div>
+  </div>
+</div>
+
+<script>
+const MOODS = ["😔","😐","🙂","😊","✨"];
+const QUESTIONS = [
+  "What was the best moment of today?",
+  "Did you do something that actually mattered to you?",
+  "What's one thing you'd do differently tomorrow?",
+  "Who did you connect with today?",
+  "What are you grateful for today?"
+];
+
+let profile = null;
+let reflections = {};
+let currentWeek = null;
+let currentDay = null;
+let selectedMood = 2;
+let viewingDay = null; // { weekIndex, dayIndex } for view modal
+
+// ── Date helpers ──────────────────────────────────────────────────────────────
+
+function todayDate() {
+  // Midnight local — no timezone drift
+  const n = new Date();
+  return new Date(n.getFullYear(), n.getMonth(), n.getDate());
+}
+
+function birthDate() {
+  return new Date(profile.birthYear, profile.birthMonth - 1, profile.birthDay);
+}
+
+function daysBetween(a, b) {
+  // Strip time, diff in whole days
+  const A = new Date(a.getFullYear(), a.getMonth(), a.getDate());
+  const B = new Date(b.getFullYear(), b.getMonth(), b.getDate());
+  return Math.round((A - B) / 86400000);
+}
+
+function getEpoch() {
+  // Monday of the week the person was born
+  const b = birthDate();
+  const dow = b.getDay(); // 0=Sun,1=Mon,...,6=Sat
+  const daysToMonday = (dow === 0) ? -6 : 1 - dow;
+  const monday = new Date(b);
+  monday.setDate(monday.getDate() + daysToMonday);
+  return monday;
+}
+
+function getDaysLived() {
+  return daysBetween(todayDate(), birthDate());
+}
+
+function getWeeksLived() {
+  return Math.floor(daysBetween(todayDate(), getEpoch()) / 7);
+}
+
+function getWeekStartDate(wi) {
+  const d = new Date(getEpoch());
+  d.setDate(d.getDate() + wi * 7);
+  return d;
+}
+
+function getDayDate(wi, di) {
+  // di=0=Monday ... di=6=Sunday
+  const d = new Date(getWeekStartDate(wi));
+  d.setDate(d.getDate() + di);
+  return d;
+}
+
+function isSameDay(a, b) {
+  return a.getFullYear() === b.getFullYear() &&
+         a.getMonth()    === b.getMonth()    &&
+         a.getDate()     === b.getDate();
+}
+
+function fmt(d) {
+  return d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+}
+
+function fmtFull(d) {
+  return d.toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+}
+
+function dayName(d) {
+  return d.toLocaleDateString("en-IN", { weekday: "long" });
+}
+
+// ── Storage ───────────────────────────────────────────────────────────────────
+
+function persist() {
+  try {
+    localStorage.setItem("mm_profile", JSON.stringify(profile));
+    localStorage.setItem("mm_reflections", JSON.stringify(reflections));
+  } catch(e) {}
+}
+
+function load() {
+  try {
+    const p = localStorage.getItem("mm_profile");
+    const r = localStorage.getItem("mm_reflections");
+    if (p) profile = JSON.parse(p);
+    if (r) reflections = JSON.parse(r);
+    if (profile) showMain();
+  } catch(e) {}
+}
+
+// ── Setup ─────────────────────────────────────────────────────────────────────
+
+function startApp() {
+  const name = document.getElementById("inp-name").value.trim();
+  const y = +document.getElementById("inp-year").value;
+  const m = +document.getElementById("inp-month").value;
+  const d = +document.getElementById("inp-day").value;
+  const life = +document.getElementById("inp-life").value;
+  if (!name || !y || !m || !d) { alert("Please fill in all fields."); return; }
+  profile = { name, birthYear: y, birthMonth: m, birthDay: d, lifeExpectancy: life };
+  persist();
+  showMain();
+}
+
+function resetApp() {
+  if (!confirm("Reset everything? All reflections will be lost.")) return;
+  localStorage.clear();
+  profile = null; reflections = {};
+  document.getElementById("main").style.display = "none";
+  document.getElementById("setup").style.display = "flex";
+}
+
+// ── Main screen ───────────────────────────────────────────────────────────────
+
+function showMain() {
+  document.getElementById("setup").style.display = "none";
+  document.getElementById("main").style.display = "block";
+  renderMain();
+}
+
+function renderMain() {
+  const daysLived = getDaysLived();
+  const weeksLived = getWeeksLived();
+  const totalWeeks = profile.lifeExpectancy * 52;
+  const weeksLeft = Math.max(0, totalWeeks - weeksLived);
+  const pct = Math.min(100, (weeksLived / totalWeeks) * 100).toFixed(1);
+  const daysRef = Object.keys(reflections).length;
+
+  document.getElementById("page-title").textContent = profile.name + "'s life in weeks";
+  document.getElementById("today-display").textContent = "Today: " + fmtFull(todayDate());
+
+  document.getElementById("stats-row").innerHTML = [
+    ["Weeks lived", weeksLived.toLocaleString()],
+    ["Weeks left", weeksLeft.toLocaleString()],
+    ["Life spent", pct + "%"],
+    ["Days reflected", daysRef]
+  ].map(([l,v]) => `<div><div class="stat-val">${v}</div><div class="stat-lbl">${l}</div></div>`).join("");
+
+  const grid = document.getElementById("dot-grid");
+  grid.innerHTML = "";
+  const WEEKS_PER_ROW = 52;
+  const dotSize = Math.min(10, Math.floor((Math.min(window.innerWidth - 48, 700)) / WEEKS_PER_ROW) - 2);
+  grid.style.gridTemplateColumns = `repeat(${WEEKS_PER_ROW}, ${dotSize}px)`;
+
+  for (let i = 0; i < totalWeeks; i++) {
+    const isPast = i < weeksLived;
+    const isCurrent = i === weeksLived;
+    const weekStartDay = i * 7;
+    const daysInWeekPast = Math.min(7, Math.max(0, daysLived - weekStartDay));
+    const daysRefInWeek = Array.from({length: daysInWeekPast}, (_,di) => reflections[`${i}-${di}`]).filter(Boolean).length;
+    const allDone = daysInWeekPast > 0 && daysRefInWeek === daysInWeekPast;
+    const anyDone = daysRefInWeek > 0;
+
+    let bg = "#1a1a1a", border = "#333";
+    if (isCurrent)      { bg = "#1e3a1e"; border = "#2d5a2d"; }
+    else if (allDone)   { bg = "#C9A84C"; border = "#C9A84C"; }
+    else if (anyDone)   { bg = "rgba(201,168,76,0.35)"; border = "rgba(201,168,76,0.5)"; }
+    else if (isPast)    { bg = "#3A3A3A"; border = "#3A3A3A"; }
+
+    const dot = document.createElement("div");
+    dot.className = "dot" + ((isPast || isCurrent) ? " clickable" : "");
+    dot.title = "Week " + (i + 1);
+    dot.style.cssText = `width:${dotSize}px;height:${dotSize}px;background:${bg};border:1px solid ${border};`;
+    if (isPast || isCurrent) dot.addEventListener("click", () => openWeekModal(i));
+    grid.appendChild(dot);
+  }
+}
+
+// ── Week modal ────────────────────────────────────────────────────────────────
+
+function openWeekModal(wi) {
+  currentWeek = wi;
+  const daysLived = getDaysLived();
+  const ws = getWeekStartDate(wi);
+  const we = new Date(ws); we.setDate(we.getDate() + 6);
+  const daysRefInWeek = Array.from({length:7}, (_,di) => reflections[`${wi}-${di}`]).filter(Boolean).length;
+  const daysInWeekPast = Math.min(7, Math.max(0, daysLived - wi * 7));
+
+  document.getElementById("wm-eyebrow").textContent = "Week " + (wi + 1);
+  document.getElementById("wm-title").textContent = fmt(ws) + " – " + fmt(we);
+  document.getElementById("wm-sub").textContent = daysRefInWeek + " of " + daysInWeekPast + " past days reflected";
+
+  const list = document.getElementById("day-list");
+  list.innerHTML = "";
+  const tday = todayDate();
+
+  for (let di = 0; di < 7; di++) {
+    const dayDate = getDayDate(wi, di);
+    const diff = daysBetween(dayDate, tday); // negative = past, 0 = today, positive = future
+    const isPast   = diff < 0;
+    const isToday  = diff === 0;
+    const isFuture = diff > 0;
+    const hasRef = !!reflections[`${wi}-${di}`];
+    const canOpen = isPast || isToday;
+    const moodEmoji = hasRef ? MOODS[reflections[`${wi}-${di}`].mood ?? 2] : "";
+    const dName = dayName(dayDate);
+
+    const btn = document.createElement("button");
+    btn.className = "day-btn" + (hasRef ? " reflected" : isToday ? " today-btn" : isFuture ? " future" : "");
+    btn.disabled = isFuture;
+    btn.innerHTML = `
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="day-dot" style="${hasRef ? "background:#C9A84C;border-color:#C9A84C;" : isToday ? "background:#1e3a1e;border-color:#4a9a4a;" : ""}"></div>
+        <div>
+          <div class="day-name ${isToday ? "today-color" : ""}">${dName}${isToday ? " · Today" : ""}</div>
+          <div class="day-date-sm">${fmt(dayDate)}</div>
+        </div>
+      </div>
+      <div class="day-arrow ${hasRef ? "reflected" : ""}">${hasRef ? moodEmoji : canOpen ? "→" : ""}</div>
+    `;
+    if (canOpen) {
+      btn.addEventListener("click", () => {
+        if (hasRef) openViewModal(wi, di);
+        else openDayModal(wi, di);
+      });
+    }
+    list.appendChild(btn);
+  }
+
+  document.getElementById("week-overlay").classList.remove("hidden");
+}
+
+function closeWeekModal() {
+  document.getElementById("week-overlay").classList.add("hidden");
+  currentWeek = null;
+}
+
+// ── Day write modal ───────────────────────────────────────────────────────────
+
+function openDayModal(wi, di) {
+  currentWeek = wi;
+  currentDay = di;
+  const ws = getWeekStartDate(wi);
+  const dayDate = getDayDate(wi, di);
+  const existing = reflections[`${wi}-${di}`] || {};
+
+  document.getElementById("dm-eyebrow").textContent = `Week ${wi + 1} · ${dayName(dayDate)}`;
+  document.getElementById("dm-title").textContent = fmt(dayDate);
+
+  selectedMood = existing.mood ?? 2;
+  renderMoodButtons("mood-row", selectedMood, false);
+
+  const h = existing.hours || {};
+  document.getElementById("h-sleep").value = h.sleep || "";
+  document.getElementById("h-work").value = h.work || "";
+  document.getElementById("h-meaningful").value = h.meaningful || "";
+  document.getElementById("h-wasted").value = h.wasted || "";
+
+  const qlist = document.getElementById("q-list");
+  qlist.innerHTML = "";
+  const answers = existing.answers || Array(QUESTIONS.length).fill("");
+  QUESTIONS.forEach((q, i) => {
+    const div = document.createElement("div");
+    div.innerHTML = `<div class="q-text">${q}</div><textarea class="q-textarea" id="q-${i}" placeholder="Write something...">${answers[i] || ""}</textarea>`;
+    qlist.appendChild(div);
+  });
+
+  document.getElementById("day-overlay").classList.remove("hidden");
+}
+
+function closeDayModal() {
+  document.getElementById("day-overlay").classList.add("hidden");
+  if (currentWeek !== null) openWeekModal(currentWeek);
+}
+
+function saveDay() {
+  const answers = QUESTIONS.map((_, i) => (document.getElementById("q-" + i) || {}).value || "");
+  const hours = {
+    sleep: document.getElementById("h-sleep").value,
+    work: document.getElementById("h-work").value,
+    meaningful: document.getElementById("h-meaningful").value,
+    wasted: document.getElementById("h-wasted").value,
+  };
+  const key = `${currentWeek}-${currentDay}`;
+  reflections[key] = { answers, mood: selectedMood, hours, completedAt: new Date().toISOString() };
+  persist();
+  document.getElementById("day-overlay").classList.add("hidden");
+  renderMain();
+  openWeekModal(currentWeek);
+}
+
+// ── Day read-only view ────────────────────────────────────────────────────────
+
+function openViewModal(wi, di) {
+  viewingDay = { wi, di };
+  const dayDate = getDayDate(wi, di);
+  const data = reflections[`${wi}-${di}`] || {};
+  const h = data.hours || {};
+  const answers = data.answers || Array(QUESTIONS.length).fill("");
+
+  document.getElementById("vm-eyebrow").textContent = `Week ${wi + 1} · ${dayName(dayDate)}`;
+  document.getElementById("vm-title").textContent = fmt(dayDate);
+
+  let html = "";
+
+  // Mood
+  html += `<div style="margin-bottom:22px;"><div class="section-lbl">Mood</div>`;
+  html += `<div style="display:flex;gap:10px;flex-wrap:wrap;">`;
+  MOODS.forEach((m, i) => {
+    html += `<div style="background:${i === (data.mood ?? 2) ? "#3A3A3A" : "transparent"};border:1px solid ${i === (data.mood ?? 2) ? "#C9A84C" : "#222"};border-radius:8px;padding:8px 10px;font-size:22px;">${m}</div>`;
+  });
+  html += `</div></div>`;
+
+  // Hours
+  html += `<div style="margin-bottom:22px;"><div class="section-lbl">Hours</div><div class="hours-display">`;
+  [["sleep","Sleep"],["work","Work"],["meaningful","Meaningful"],["wasted","Wasted"]].forEach(([k,l]) => {
+    html += `<div class="hour-display-cell"><div class="hour-display-val">${h[k] || "—"}</div><div class="hour-display-lbl">${l}</div></div>`;
+  });
+  html += `</div></div>`;
+
+  // Answers
+  html += `<div style="margin-bottom:24px;"><div class="section-lbl">Reflections</div><div class="q-list">`;
+  QUESTIONS.forEach((q, i) => {
+    const ans = answers[i] || "";
+    html += `<div><div class="q-text">${q}</div><div class="readonly-answer ${ans ? "" : "empty"}">${ans || "Not answered"}</div></div>`;
+  });
+  html += `</div></div>`;
+
+  if (data.completedAt) {
+    const saved = new Date(data.completedAt);
+    html += `<div style="color:#333;font-size:11px;text-align:right;">Saved on ${fmt(saved)}</div>`;
+  }
+
+  document.getElementById("vm-content").innerHTML = html;
+  document.getElementById("view-overlay").classList.remove("hidden");
+}
+
+function closeViewModal() {
+  document.getElementById("view-overlay").classList.add("hidden");
+  viewingDay = null;
+}
+
+function switchToEdit() {
+  if (!viewingDay) return;
+  const { wi, di } = viewingDay;
+  closeViewModal();
+  openDayModal(wi, di);
+}
+
+// ── Journal ───────────────────────────────────────────────────────────────────
+
+function openJournal() {
+  document.getElementById("journal-search").value = "";
+  document.getElementById("journal-mood-filter").value = "";
+  renderJournal();
+  document.getElementById("journal-overlay").classList.remove("hidden");
+}
+
+function closeJournal() {
+  document.getElementById("journal-overlay").classList.add("hidden");
+}
+
+function renderJournal() {
+  const search = document.getElementById("journal-search").value.toLowerCase();
+  const moodFilter = document.getElementById("journal-mood-filter").value;
+  const list = document.getElementById("journal-list");
+
+  // Build entries array sorted newest first
+  const entries = Object.entries(reflections).map(([key, data]) => {
+    const [wi, di] = key.split("-").map(Number);
+    const dayDate = getDayDate(wi, di);
+    return { key, wi, di, dayDate, data };
+  }).sort((a, b) => b.dayDate - a.dayDate);
+
+  // Filter
+  const filtered = entries.filter(({ data, dayDate }) => {
+    if (moodFilter !== "" && (data.mood ?? 2) !== +moodFilter) return false;
+    if (search) {
+      const text = (data.answers || []).join(" ").toLowerCase();
+      const dateStr = fmt(dayDate).toLowerCase();
+      if (!text.includes(search) && !dateStr.includes(search)) return false;
+    }
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    list.innerHTML = `<div class="journal-empty">No reflections found.<br>Start by clicking any past week on the grid.</div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(({ wi, di, dayDate, data }) => {
+    const answers = data.answers || [];
+    const preview = answers.find(a => a && a.trim()) || "";
+    const h = data.hours || {};
+    const hoursStr = [h.sleep && `${h.sleep}h sleep`, h.work && `${h.work}h work`, h.meaningful && `${h.meaningful}h meaningful`].filter(Boolean).join(" · ");
+    return `
+      <div class="journal-entry" onclick="openJournalEntry(${wi},${di})">
+        <div class="journal-entry-header">
+          <div class="journal-entry-date">${fmtFull(dayDate)}</div>
+          <div style="font-size:22px;">${MOODS[data.mood ?? 2]}</div>
+        </div>
+        <div class="journal-entry-meta">
+          <span class="journal-tag">Week ${wi + 1} · ${dayName(dayDate)}</span>
+          ${hoursStr ? `<span class="journal-tag">${hoursStr}</span>` : ""}
+        </div>
+        ${preview ? `<div class="journal-preview">${preview}</div>` : ""}
+      </div>
+    `;
+  }).join("");
+}
+
+function openJournalEntry(wi, di) {
+  closeJournal();
+  openViewModal(wi, di);
+}
+
+// ── Mood buttons ──────────────────────────────────────────────────────────────
+
+function renderMoodButtons(containerId, activeMood, readonly) {
+  const row = document.getElementById(containerId);
+  row.innerHTML = "";
+  MOODS.forEach((m, i) => {
+    const btn = document.createElement("button");
+    btn.className = "mood-btn" + (i === activeMood ? " active" : "");
+    btn.textContent = m;
+    if (!readonly) {
+      btn.addEventListener("click", () => {
+        selectedMood = i;
+        document.querySelectorAll(`#${containerId} .mood-btn`).forEach((b, j) => {
+          b.className = "mood-btn" + (j === i ? " active" : "");
+        });
+      });
+    } else {
+      btn.style.cursor = "default";
+    }
+    row.appendChild(btn);
+  });
+}
+
+load();
+</script>
+</body>
+</html>
